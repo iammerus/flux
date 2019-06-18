@@ -55,6 +55,7 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "foundation-sites": "^6.5.3",
     "mz": "^2.7.0",
     "vue": "^2.5.16",
     "vue-electron": "^1.0.6",

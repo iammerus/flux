@@ -2,26 +2,55 @@ import fs from "mz/fs";
 import {toArrayBuffer} from "^/core/utils/Buffers";
 import {enforceFileExists} from "^/core/files/Helpers";
 
+
+/**
+ * The player class, assumes that despite which state management system is being used,
+ * the following mutations exist
+ *
+ * 1. setIsPlaying
+ * 2. setIsStoppedPlaying
+ * 3. setLastPlayedSong
+ *
+ * Additionally, it assumes that the following getters also exist on the state
+ *
+ * 1. getIsPlaying
+ * 2. getLastPlayedSong
+ */
+
 export default class Player {
+
+    /**
+     * Wrapper class around our current state management system
+     *
+     * @type {StateWrapper}
+     */
+    stateWrapper;
+
+    constructor(stateWrapper) {
+        this.stateWrapper = stateWrapper;
+    }
+
     /**
      * The buffer source for the song currently being played
      *
      * @type {AudioBufferSourceNode|null}
      */
-    static currentBufferSource = null;
+    currentBufferSource = null;
 
-    static lastPlayTime = null;
+    lastPlayTime = null;
 
-    static currentNativeBuffer = null;
+    currentNativeBuffer = null;
 
-    static currentAudioBuffer = null;
+    currentAudioBuffer = null;
+
+    isPaused = false;
 
     /**
      * Audio Context
      * @type {AudioContext|null}
      * @private
      */
-    static _context = null;
+    _context = null;
 
     /**
      * Get an instance of the AudioContext class
@@ -29,7 +58,7 @@ export default class Player {
      * @private
      * @returns {AudioContext}
      */
-    static getContext() {
+    getContext() {
         if (this._context === null) {
             this._context = new AudioContext();
         }
@@ -44,7 +73,11 @@ export default class Player {
      *
      * @returns {Promise<void>|void}
      */
-    static async play(file) {
+    async play(file) {
+        if(this.isPaused) {
+            return this.resume();
+        }
+
         // Make sure the file exists
         await enforceFileExists(file);
 
@@ -57,30 +90,38 @@ export default class Player {
         this.createNewAudioBufferSourceNode();
 
         this.currentBufferSource.start();
+
+        this.stateWrapper.mutate('setIsPlaying')
     }
 
-    static resume() {
+    resume() {
         if (!this.currentBufferSource || !this.lastPlayTime) return;
 
         this.createNewAudioBufferSourceNode();
 
-        console.log(this.lastPlayTime);
-
-        this.currentBufferSource.start(this.lastPlayTime);
+        this.currentBufferSource.start(this.lastPlayTime, this.lastPlayTime);
+        this.isPaused = false;
     }
 
-    static pause() {
+    pause() {
         if (!this.currentBufferSource) return;
 
         this.currentBufferSource.stop();
 
-        this.lastPlayTime = this.getContext().currentTime;
+        let context = this.getContext();
+
+        this.lastPlayTime = context.currentTime;
+
+        this.isPaused = true;
     }
 
-    static async createNewAudioBufferSourceNode() {
-        this.currentBufferSource = this.getContext().createBufferSource();
+    createNewAudioBufferSourceNode() {
+        let context = this.getContext();
+
+        this.currentBufferSource = context.createBufferSource();
 
         this.currentBufferSource.buffer = this.currentAudioBuffer;
-        this.currentBufferSource.connect(this.getContext().destination);
+
+        this.currentBufferSource.connect(context.destination);
     }
 }
