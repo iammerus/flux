@@ -1,8 +1,21 @@
 import fs from "mz/fs";
-import {enforceFileExists} from "^/core/files/Helpers";
 import {toArrayBuffer} from "^/core/utils/Buffers";
+import {enforceFileExists} from "^/core/files/Helpers";
 
 export default class Player {
+    /**
+     * The buffer source for the song currently being played
+     *
+     * @type {AudioBufferSourceNode|null}
+     */
+    static currentBufferSource = null;
+
+    static lastPlayTime = null;
+
+    static currentNativeBuffer = null;
+
+    static currentAudioBuffer = null;
+
     /**
      * Audio Context
      * @type {AudioContext|null}
@@ -25,26 +38,49 @@ export default class Player {
     }
 
     /**
-     * Play
+     * Play the specified file
+     *
+     * @param {String} file The full path to the file to play
+     *
+     * @returns {Promise<void>|void}
      */
     static async play(file) {
         // Make sure the file exists
         await enforceFileExists(file);
 
-        // Open buffer to file
-        let buffer = await fs.readFile(file);
+        this.currentNativeBuffer = await fs.readFile(file);
 
         let context = this.getContext();
 
-        let audioBuffer = await context.decodeAudioData(toArrayBuffer(buffer));
+        this.currentAudioBuffer = await context.decodeAudioData(toArrayBuffer(this.currentNativeBuffer));
 
-        const source = context.createBufferSource();
+        this.createNewAudioBufferSourceNode();
 
-        source.buffer = audioBuffer;
-        source.connect(context.destination);
+        this.currentBufferSource.start();
+    }
 
-        source.start();
+    static resume() {
+        if (!this.currentBufferSource || !this.lastPlayTime) return;
 
-        return new Promise((resolve, reject) => resolve(true))
+        this.createNewAudioBufferSourceNode();
+
+        console.log(this.lastPlayTime);
+
+        this.currentBufferSource.start(this.lastPlayTime);
+    }
+
+    static pause() {
+        if (!this.currentBufferSource) return;
+
+        this.currentBufferSource.stop();
+
+        this.lastPlayTime = this.getContext().currentTime;
+    }
+
+    static async createNewAudioBufferSourceNode() {
+        this.currentBufferSource = this.getContext().createBufferSource();
+
+        this.currentBufferSource.buffer = this.currentAudioBuffer;
+        this.currentBufferSource.connect(this.getContext().destination);
     }
 }

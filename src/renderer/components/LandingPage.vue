@@ -1,6 +1,8 @@
 <template>
     <div id="wrapper">
         <button @click="playSong">Select A Song</button>
+        <button @click="resumeSong">Resume Song</button>
+        <button @click="pauseSong">Pause Song</button>
     </div>
 </template>
 
@@ -12,8 +14,13 @@
     export default {
         name: 'landing-page',
         methods: {
+            resumeSong() {
+                Player.resume();
+            },
+            pauseSong() {
+                Player.pause();
+            },
             playSong() {
-
                 dialog.showOpenDialog({
                     properties: ['openFile']
                 }, function (files) {
