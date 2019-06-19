@@ -13,6 +13,7 @@
     import Player from "^/core/audio/Player";
     import {mapGetters, mapActions} from 'vuex'
     import VuexStateWrapper from "^/core/state/VuexStateWrapper";
+    import Library from "^/core/audio/types/Library";
 
     const {dialog} = require('electron').remote;
 
@@ -43,7 +44,7 @@
             }
         },
         mounted() {
-            this.$options.player = new Player(new VuexStateWrapper());
+            this.$options.library = new Library(new VuexStateWrapper());
         }
     }
 </script>

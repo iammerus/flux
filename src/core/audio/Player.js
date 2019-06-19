@@ -1,6 +1,7 @@
 import fs from "mz/fs";
 import {toArrayBuffer} from "^/core/utils/Buffers";
 import {enforceFileExists} from "^/core/files/Helpers";
+import Song from "^/core/audio/types/Song";
 
 
 /**
@@ -85,7 +86,11 @@ export default class Player {
 
         let context = this.getContext();
 
-        this.currentAudioBuffer = await context.decodeAudioData(toArrayBuffer(this.currentNativeBuffer));
+        let arrayBuffer = toArrayBuffer(this.currentNativeBuffer);
+
+        let song = new Song(arrayBuffer);
+
+        this.currentAudioBuffer = await context.decodeAudioData(arrayBuffer);
 
         this.createNewAudioBufferSourceNode();
 

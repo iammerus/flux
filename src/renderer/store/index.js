@@ -7,8 +7,6 @@ import modules from './modules'
 
 Vue.use(Vuex)
 
-console.log(modules)
-
 export default new Vuex.Store({
   modules,
   plugins: [

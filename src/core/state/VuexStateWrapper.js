@@ -1,4 +1,5 @@
 import Globals from "^/core/utils/Globals"
+import StateWrapper from "^/core/state/StateWrapper";
 
 // TODO: Create an interface from which all state wrappers inherit from
 //  so that we can easily switch state wrappers if we choose to change our
@@ -9,8 +10,10 @@ import Globals from "^/core/utils/Globals"
  *
  * This is so our business logic doesn't depend on Vuex directly. What what what
  */
-export default class VuexStateWrapper {
+export default class VuexStateWrapper extends StateWrapper {
     constructor() {
+        super();
+
         this.$vue = Globals.getVueInstance();
 
         console.log(this.$vue);
