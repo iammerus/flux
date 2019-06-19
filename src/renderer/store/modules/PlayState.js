@@ -13,12 +13,30 @@ const getters = {
 };
 
 const mutations = {
+    /**
+     * Sets a boolean value indicating that the player is playing a song
+     * 
+     * @param {*} state 
+     */
     setIsPlaying (state) {
         state.isPlaying = true;
     },
+
+    /**
+     * Set a boolean value indicating that the player has stopped playing 
+     * 
+     * @param {*} state 
+     */
     setIsStoppedPlaying(state) {
       state.isPlaying = false
     },
+
+    /**
+     * Sets the current playing song
+     * 
+     * @param {*} state 
+     * @param {*} song 
+     */
     setLastPlayedSong(state, song) {
         state.lastPlayedSong = song;
     }

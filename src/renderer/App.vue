@@ -6,7 +6,10 @@
 
 <script>
   export default {
-    name: 'flux-player'
+    name: 'flux-player',
+    created() {
+       
+    }
   }
 </script>
 
