@@ -6,12 +6,16 @@
                 <button @click="play(song)">{{ currentPlayingSong === song && isPlaying ? "Pause" : "Play" }}</button>
             </div>
         </section>
+
+        <progress-bar></progress-bar>
     </div>
 </template>
 
 <script>
+    import ProgressBar from "@/components/Tabs/Partials/ProgressBar";
     export default {
         name: "Library",
+        components: {ProgressBar},
         props: ['isPlaying', 'isStopped', 'isPaused', 'currentPlayingSong', 'genres', 'songs'],
         created() {
             this.$eventHub.$on('library.scan.complete', () => {

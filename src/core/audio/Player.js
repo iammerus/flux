@@ -223,6 +223,6 @@ export default class Player {
     initOnProgressChanged() {
         this.progressHandle = setInterval(() => {
             emitEvent('player.track.progress.changed', this.getContext().currentTime, this.currentAudioBuffer.duration);
-        }, 1000)
+        }, 500)
     }
 }
