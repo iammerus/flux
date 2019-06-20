@@ -48,9 +48,17 @@ export default class Player {
 
     currentNativeBuffer = null;
 
+    /**
+     *
+     * @type {AudioBuffer}
+     */
     currentAudioBuffer = null;
 
     isPaused = false;
+
+    _startTimestamp = 0; // timestamp of last playback start, milliseconds
+    _isPlaying = false;
+    _bufferDuration = 0; // seconds
 
     /**
      *
@@ -89,30 +97,41 @@ export default class Player {
      *
      * @returns {Promise<void>|void}
      */
-    async play(song) {
-        if(this.isPaused) {
+    async play(song, seeking = false) {
+        if (this.isPaused) {
             return this.resume();
         }
 
-        if (this.isPlaying) {
+        if (this.isPlaying && !seeking) {
             this.stop();
         }
 
-        // Make sure the file exists
-        await enforceFileExists(song.fileName);
-
-        this.currentSong = song;
-        this.currentNativeBuffer = await fs.readFile(song.fileName);
+        let isReusing = false;
+        if ((!song && this.currentSong) || seeking) {
+            isReusing = true;
+            song = this.currentSong;
+        }
 
         let context = this.getContext();
 
-        let arrayBuffer = toArrayBuffer(this.currentNativeBuffer);
+        if (!isReusing) {
+            // Make sure the file exists
+            await enforceFileExists(song.fileName);
 
-        this.currentAudioBuffer = await context.decodeAudioData(arrayBuffer);
+            this.currentSong = song;
+            this.currentNativeBuffer = await fs.readFile(song.fileName);
+
+            let arrayBuffer = toArrayBuffer(this.currentNativeBuffer);
+
+            this.currentAudioBuffer = await context.decodeAudioData(arrayBuffer);
+        }
 
         this.createNewAudioBufferSourceNode();
 
-        this.currentBufferSource.start();
+        this.lastPlayTime = 0;
+        this.currentBufferSource.start(0, this.lastPlayTime);
+
+        this._startTimestamp = Date.now();
 
         this.isPlaying = true;
         this.stateWrapper.mutate('setIsPlaying');
@@ -120,14 +139,25 @@ export default class Player {
         emitEvent('player.state.changed', 'playing', this.currentSong);
     }
 
-    stop() {
-        if (!this.currentBufferSource) return;
+    stop(pausing, seeking) {
+        if (!this.isPlaying) return;
+        this.currentBufferSource.stop(0);
 
-        this.currentBufferSource.stop();
+        if(seeking) return;
 
-        this.isPaused = false;
+        this.isPlaying = false; // Set to flag to endOfPlayback callback that this was set manually
 
-        emitEvent('player.state.changed', 'stopped', this.currentSong);
+        // If paused, calculate time where we stopped. Otherwise go back to beginning of playback (0).
+        this.lastPlayTime = pausing ? (Date.now() - this._startTimestamp) / 1000 + this.lastPlayTime : 0;
+        console.log(pausing);
+
+        console.log(this.lastPlayTime, (Date.now() - this._startTimestamp) / 1000 + this.lastPlayTime);
+
+        if (!pausing) {
+            emitEvent('player.state.changed', 'stopped', this.currentSong);
+        }
+
+        return true;
     }
 
     resume() {
@@ -136,23 +166,21 @@ export default class Player {
         this.createNewAudioBufferSourceNode();
 
         this.currentBufferSource.start(this.lastPlayTime, this.lastPlayTime);
+
         this.isPaused = false;
+        this.isPlaying = true;
+
 
         emitEvent('player.state.changed', 'playing', this.currentSong);
     }
 
     pause() {
-        if (!this.currentBufferSource) return;
+        if (this.stop(true)) {
+            this.isPaused = true;
+            this.isPlaying = false;
 
-        this.currentBufferSource.stop();
-
-        let context = this.getContext();
-
-        this.lastPlayTime = context.currentTime;
-
-        this.isPaused = true;
-        emitEvent('player.state.changed', 'paused', this.currentSong);
-
+            emitEvent('player.state.changed', 'paused', this.currentSong);
+        }
     }
 
     createNewAudioBufferSourceNode() {
@@ -163,5 +191,35 @@ export default class Player {
         this.currentBufferSource.buffer = this.currentAudioBuffer;
 
         this.currentBufferSource.connect(context.destination);
+
+        this.currentBufferSource.onended = () => this.onPlaybackEnded();
+        this.lastPlayTime = 0;
+    }
+
+    // Seek to a specific playbackTime (seconds) in the audio buffer. Do not change
+    // playback state.
+    seek(playbackTime) {
+        if (!playbackTime) return;
+
+        if (playbackTime > this.currentAudioBuffer.duration) {
+            console.log("[ERROR] Seek time is greater than duration of audio buffer.");
+            return;
+        }
+
+        if (this.isPlaying) {
+            this.stop(false, true); // Stop any existing playback if there is any
+            this.lastPlayTime = playbackTime;
+            this.play(null, true); // Resume playback at new time
+        } else {
+            this.lastPlayTime = playbackTime;
+        }
+    }
+
+    onStopped() {
+        this.isPlaying = false;
+    }
+
+    onPlaybackEnded() {
+        this.onStopped();
     }
 }

@@ -27,10 +27,12 @@
         methods: {
             play(song) {
                 if (this.isPlaying && song === this.currentPlayingSong) {
+                    console.log("Pausing");
+
                     return this.$player.pause();
                 }
 
-
+                console.log("Playing");
                 this.$player.play(song);
             },
         },
