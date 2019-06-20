@@ -79,6 +79,7 @@ export default class Player {
     currentNativeBuffer = null;
 
     /**
+     * Audio buffer for the current track
      *
      * @type {AudioBuffer}
      */
@@ -206,6 +207,7 @@ export default class Player {
         this.initOnProgressChanged();
 
         this.startTimestamp = Date.now();
+        this.startedAt = context.currentTime;
 
         this.isPlaying = true;
         this.stateWrapper.mutate('setIsPlaying');
@@ -237,6 +239,7 @@ export default class Player {
         this.createNewAudioBufferSourceNode();
 
         this.currentBufferSource.start(this.lastPlayTime, this.lastPlayTime);
+
         this.initOnProgressChanged();
 
         this.isPaused = false;
@@ -303,7 +306,8 @@ export default class Player {
         this.progressHandle = setInterval(() => {
             emitEvent(
                 'player.track.progress.changed',
-                this.getContext().currentTime, this.currentAudioBuffer.duration)
+
+                this.getContext().currentTime - this.startedAt, this.currentAudioBuffer.duration)
             ;
         }, 500)
     }
