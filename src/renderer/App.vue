@@ -54,7 +54,7 @@
 
         this.isPlaying = state === 'playing';
         this.isPaused = state === 'paused';
-        this.isStopped = state === 'stopped';
+        this.isStopped = state === 'stopped' || state === 'ended';
       });
 
 

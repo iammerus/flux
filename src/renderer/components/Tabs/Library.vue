@@ -1,5 +1,8 @@
 <template>
     <div class="library page">
+        <button @click="playEntireLibrary">Play Library</button>
+        <button @click="nextSong">Next Song</button>
+        <button @click="previousSong">Previous Song</button>
         <section id="songs">
             <div class="song" v-for="song in songs">
                 {{ song.title }} - {{ song.artist }}
@@ -13,6 +16,7 @@
 
 <script>
     import ProgressBar from "@/components/Tabs/Partials/ProgressBar";
+
     export default {
         name: "Library",
         components: {ProgressBar},
@@ -29,6 +33,17 @@
             }
         },
         methods: {
+            playEntireLibrary() {
+                if (this.isPlaying) return;
+
+                this.$player.playPlaylist();
+            },
+            nextSong() {
+                this.$player.next();
+            },
+            previousSong() {
+                this.$player.prev();
+            },
             play(song) {
                 if (this.isPlaying && song === this.currentPlayingSong) {
                     console.log("Pausing");

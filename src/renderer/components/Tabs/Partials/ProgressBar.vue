@@ -18,6 +18,10 @@
             this.$eventHub.$on('player.track.progress.changed', (progress, duration) => {
                 this.progressAsWidth = (progress / duration) * 100
             });
+
+            this.$eventHub.$on('player.state.changed', (state) => {
+                if (state === 'stopped') this.progressAsWidth = 0;
+            })
         }
     }
 </script>
