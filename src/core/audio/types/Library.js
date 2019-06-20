@@ -14,11 +14,18 @@ export default class Library {
      * @param {StateWrapper} stateWrapper
      */
     constructor(stateWrapper) {
-        if (!stateWrapper.get('Library/getPreviouslyScanned')) {
-            this.scanTracks(stateWrapper.get("Library/getWatchedDirectories"));
+        this.stateWrapper = stateWrapper;
+    }
+
+    async readLibrary() {
+        if (!this.stateWrapper.get('Library/getPreviouslyScanned')) {
+            // noinspection JSIgnoredPromiseFromCall
+            await this.scanTracks(this.stateWrapper.get("Library/getWatchedDirectories"));
         } else {
-            this.musicCollection = stateWrapper.get('Library/getScannedTracks');
+            this.musicCollection = this.stateWrapper.get('Library/getScannedTracks');
         }
+
+        return this.musicCollection;
     }
 
     /**
@@ -38,13 +45,23 @@ export default class Library {
             tracks = tracks.concat(batch);
         }
 
-        this.readSongs(tracks);
+        await this.readSongs(tracks);
     }
 
     async readSongs(tracks) {
-        // this.state
+        let limit = 5;
         for (let track of tracks) {
-            this.musicCollection.push(new Song(await DirectoryHelper.getFileArrayBuffer(track)))
+            if (limit === 0) {
+                break;
+            }
+
+            this.musicCollection.push(new Song(await DirectoryHelper.getFileArrayBuffer(track), track));
+
+            limit--;
         }
+    }
+
+    getState() {
+        return this.stateWrapper;
     }
 }

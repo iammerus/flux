@@ -1,14 +1,15 @@
 import Vue from 'vue'
 import Router from 'vue-router'
+import Library from "@/components/Tabs/Library";
 
-Vue.use(Router)
+Vue.use(Router);
 
 export default new Router({
   routes: [
     {
       path: '/',
-      name: 'landing-page',
-      component: require('@/components/LandingPage').default
+      name: 'music-library',
+      component: Library
     },
     {
       path: '*',

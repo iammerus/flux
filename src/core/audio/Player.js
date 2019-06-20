@@ -2,7 +2,7 @@ import fs from "mz/fs";
 import {toArrayBuffer} from "^/core/utils/Buffers";
 import {enforceFileExists} from "^/core/files/Helpers";
 import Song from "^/core/audio/types/Song";
-
+import {emitEvent} from "^/core/state/EventHelper";
 
 /**
  * The player class, assumes that despite which state management system is being used,
@@ -27,9 +27,15 @@ export default class Player {
      */
     stateWrapper;
 
-    constructor(stateWrapper) {
-        this.stateWrapper = stateWrapper;
-    }
+    currentSong;
+
+    /**
+     * Represents the user's music library in memory
+     *
+     * @type {Library}
+     */
+    library;
+    isPlaying = false;
 
     /**
      * The buffer source for the song currently being played
@@ -45,6 +51,15 @@ export default class Player {
     currentAudioBuffer = null;
 
     isPaused = false;
+
+    /**
+     *
+     * @param {Library} library
+     */
+    constructor(library) {
+        this.stateWrapper = library.getState();
+        this.library = library;
+    }
 
     /**
      * Audio Context
@@ -70,25 +85,28 @@ export default class Player {
     /**
      * Play the specified file
      *
-     * @param {String} file The full path to the file to play
+     * @param {Song} song The full path to the file to play
      *
      * @returns {Promise<void>|void}
      */
-    async play(file) {
+    async play(song) {
         if(this.isPaused) {
             return this.resume();
         }
 
-        // Make sure the file exists
-        await enforceFileExists(file);
+        if (this.isPlaying) {
+            this.stop();
+        }
 
-        this.currentNativeBuffer = await fs.readFile(file);
+        // Make sure the file exists
+        await enforceFileExists(song.fileName);
+
+        this.currentSong = song;
+        this.currentNativeBuffer = await fs.readFile(song.fileName);
 
         let context = this.getContext();
 
         let arrayBuffer = toArrayBuffer(this.currentNativeBuffer);
-
-        let song = new Song(arrayBuffer);
 
         this.currentAudioBuffer = await context.decodeAudioData(arrayBuffer);
 
@@ -96,7 +114,20 @@ export default class Player {
 
         this.currentBufferSource.start();
 
-        this.stateWrapper.mutate('setIsPlaying')
+        this.isPlaying = true;
+        this.stateWrapper.mutate('setIsPlaying');
+
+        emitEvent('player.state.changed', 'playing', this.currentSong);
+    }
+
+    stop() {
+        if (!this.currentBufferSource) return;
+
+        this.currentBufferSource.stop();
+
+        this.isPaused = false;
+
+        emitEvent('player.state.changed', 'stopped', this.currentSong);
     }
 
     resume() {
@@ -106,6 +137,8 @@ export default class Player {
 
         this.currentBufferSource.start(this.lastPlayTime, this.lastPlayTime);
         this.isPaused = false;
+
+        emitEvent('player.state.changed', 'playing', this.currentSong);
     }
 
     pause() {
@@ -118,6 +151,8 @@ export default class Player {
         this.lastPlayTime = context.currentTime;
 
         this.isPaused = true;
+        emitEvent('player.state.changed', 'paused', this.currentSong);
+
     }
 
     createNewAudioBufferSourceNode() {

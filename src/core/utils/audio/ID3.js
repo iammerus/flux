@@ -57,11 +57,6 @@ export default class ID3 {
     static read(buffer) {
         let header = new DataView(buffer, 0, this.HEADER_SIZE);
 
-        let major = header.getUint8(3);
-        let minor = header.getUint8(4);
-        let version = `ID3v2.${major}.${minor}`;
-        console.log(version);
-
         let size = this.syncToInt(header.getUint32(6));
 
         let offset = this.HEADER_SIZE;

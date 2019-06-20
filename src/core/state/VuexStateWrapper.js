@@ -15,8 +15,6 @@ export default class VuexStateWrapper extends StateWrapper {
         super();
 
         this.$vue = Globals.getVueInstance();
-
-        console.log(this.$vue);
     }
 
     get(accessor) {
