@@ -128,8 +128,7 @@ export default class Player {
 
         this.createNewAudioBufferSourceNode();
 
-        this.lastPlayTime = 0;
-        this.currentBufferSource.start(0, this.lastPlayTime);
+        this.currentBufferSource.start(this.lastPlayTime, this.lastPlayTime);
 
         this._startTimestamp = Date.now();
 
@@ -149,9 +148,6 @@ export default class Player {
 
         // If paused, calculate time where we stopped. Otherwise go back to beginning of playback (0).
         this.lastPlayTime = pausing ? (Date.now() - this._startTimestamp) / 1000 + this.lastPlayTime : 0;
-        console.log(pausing);
-
-        console.log(this.lastPlayTime, (Date.now() - this._startTimestamp) / 1000 + this.lastPlayTime);
 
         if (!pausing) {
             emitEvent('player.state.changed', 'stopped', this.currentSong);
@@ -193,7 +189,6 @@ export default class Player {
         this.currentBufferSource.connect(context.destination);
 
         this.currentBufferSource.onended = () => this.onPlaybackEnded();
-        this.lastPlayTime = 0;
     }
 
     // Seek to a specific playbackTime (seconds) in the audio buffer. Do not change
@@ -216,7 +211,7 @@ export default class Player {
     }
 
     onStopped() {
-        this.isPlaying = false;
+        // this.isPlaying = false;
     }
 
     onPlaybackEnded() {
