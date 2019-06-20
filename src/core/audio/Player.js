@@ -129,6 +129,7 @@ export default class Player {
         this.createNewAudioBufferSourceNode();
 
         this.currentBufferSource.start(this.lastPlayTime, this.lastPlayTime);
+        this.initOnProgressChanged();
 
         this._startTimestamp = Date.now();
 
@@ -162,6 +163,7 @@ export default class Player {
         this.createNewAudioBufferSourceNode();
 
         this.currentBufferSource.start(this.lastPlayTime, this.lastPlayTime);
+        this.initOnProgressChanged();
 
         this.isPaused = false;
         this.isPlaying = true;
@@ -197,7 +199,6 @@ export default class Player {
         if (!playbackTime) return;
 
         if (playbackTime > this.currentAudioBuffer.duration) {
-            console.log("[ERROR] Seek time is greater than duration of audio buffer.");
             return;
         }
 
@@ -212,9 +213,16 @@ export default class Player {
 
     onStopped() {
         // this.isPlaying = false;
+        clearInterval(this.progressHandle);
     }
 
     onPlaybackEnded() {
         this.onStopped();
+    }
+
+    initOnProgressChanged() {
+        this.progressHandle = setInterval(() => {
+            emitEvent('player.track.progress.changed', this.getContext().currentTime, this.currentAudioBuffer.duration);
+        }, 1000)
     }
 }
