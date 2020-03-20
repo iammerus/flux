@@ -1,19 +1,3 @@
-# Flux Music Player
+# DO NOT USE
 
-The last music player you will ever need
-
-#### Build Setup
-
-``` bash
-# install dependencies
-yarn
-
-# serve with hot reload at localhost:9080
-yarn run dev
-
-# build electron application for production
-yarn run build
-
-# run unit & end-to-end tests
-yarn test
-```
+This project has been abandoned because our lead UI/UX dev was skimping on work and to get out of said work said he hated Vue with all his life forcing us to jump ship to what HE wants because he's a douchebag
